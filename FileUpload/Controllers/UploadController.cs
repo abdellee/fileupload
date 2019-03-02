@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -22,15 +23,46 @@ public class UploadController : ApiController
 
         try
         {
-            // Read the form data.
-            await Request.Content.ReadAsMultipartAsync(provider);
+            //var streamProvider = new MultipartMemoryStreamProvider();
+            //await Request.Content.ReadAsMultipartAsync<MultipartMemoryStreamProvider>(streamProvider)
+            //   .ContinueWith((tsk) =>
+            // {
 
-            // This illustrates how to get the file names.
-            foreach (MultipartFileData file in provider.FileData)
+            //     foreach (HttpContent ctnt in streamProvider.Contents)
+            //     {
+            //          // You would get hold of the inner memory stream here
+            //          Stream stream1 = ctnt.ReadAsStreamAsync().Result;
+
+            //          // do something witht his stream now
+            //      }
+            // });
+
+
+            MultipartMemoryStreamProvider stream = await this.Request.Content.ReadAsMultipartAsync();
+            foreach (var st in stream.Contents)
             {
-                Trace.WriteLine(file.Headers.ContentDisposition.FileName);
-                Trace.WriteLine("Server file path: " + file.LocalFileName);
+                var fileBytes = await st.ReadAsByteArrayAsync();
+                string base64 = Convert.ToBase64String(fileBytes);
+                var contentHeader = st.Headers;
+                if(string.IsNullOrEmpty(contentHeader.ContentDisposition.FileName))
+                {
+                    string filename = contentHeader.ContentDisposition.FileName.Replace("\"", "");
+                    string filetype = contentHeader.ContentType.MediaType;
+                }
             }
+
+
+
+
+            //// Read the form data.
+            //await Request.Content.ReadAsMultipartAsync(provider);
+
+            //// This illustrates how to get the file names.
+            //foreach (MultipartFileData file in provider.FileData)
+            //{
+            //    Trace.WriteLine(file.Headers.ContentDisposition.FileName);
+            //    Trace.WriteLine("Server file path: " + file.LocalFileName);
+            //}
             return Request.CreateResponse(HttpStatusCode.OK);
         }
         catch (System.Exception e)
